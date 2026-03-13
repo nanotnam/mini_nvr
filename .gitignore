@@ -205,3 +205,12 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# NVR runtime data — keep the dirs, ignore their contents
+/record/*
+!/record/.gitkeep
+/conf/*
+!/conf/.gitkeep
+
+# SQLite database generated at runtime
+backend/db/*.db

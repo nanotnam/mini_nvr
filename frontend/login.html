@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>StreamUI — Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <link href="./assets/logo.svg" rel="icon" type="image/svg" />
+  <link href="./css/app.css" rel="stylesheet" />
+</head>
+<body>
+  <div id="app">
+    <div class="login-page">
+      <div class="login-box">
+        <div style="text-align:center;margin-bottom:8px">
+          <img src="./assets/logo.svg" alt="Logo" width="40" />
+        </div>
+        <div class="login-title">StreamUI</div>
+        <form @submit.prevent="handleLogin">
+          <input class="input" type="password" v-model="password" required placeholder="Enter password" autocomplete="off" />
+          <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center">Login</button>
+        </form>
+        <div v-if="error" style="color:#c62828;margin-top:12px;font-size:.9rem">{{ error }}</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./assets/vue.global.prod.js"></script>
+  <script>
+    const { createApp, ref } = Vue;
+    createApp({
+      setup() {
+        const password = ref('');
+        const error = ref('');
+        function handleLogin() {
+          if (password.value === 'streamui') {
+            localStorage.setItem('loginTime', String(Date.now()));
+            window.location.href = './index.html';
+          } else {
+            error.value = 'Incorrect password';
+            setTimeout(() => { error.value = ''; }, 2000);
+          }
+        }
+        return { password, error, handleLogin };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>

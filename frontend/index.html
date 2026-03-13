@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>StreamUI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <link href="./assets/logo.svg" rel="icon" type="image/svg" />
+  <link href="./css/app.css" rel="stylesheet" />
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    (function checkLoginStatus() {
+      const loginTimeStr = localStorage.getItem('loginTime');
+      if (!loginTimeStr) { window.location.href = 'login.html'; return; }
+      const diffInDays = Math.ceil((Date.now() - parseInt(loginTimeStr)) / (24 * 60 * 60 * 1000));
+      if (diffInDays > 3) { localStorage.removeItem('loginTime'); window.location.href = 'login.html'; }
+    })();
+  </script>
+
+  <script src="./assets/vue.global.prod.js"></script>
+  <script src="./assets/echarts.min.js"></script>
+
+  <!-- App shell (shared components, helpers, Vue destructures) -->
+  <script src="./js/app.js"></script>
+
+  <!-- Page components (loaded after app.js whose globals they use) -->
+  <script src="./js/pages/dashboard.js"></script>
+  <script src="./js/pages/pull-streams.js"></script>
+  <script src="./js/pages/push-streams.js"></script>
+  <script src="./js/pages/video-wall.js"></script>
+  <script src="./js/pages/playback.js"></script>
+  <script src="./js/pages/settings.js"></script>
+
+  <script>
+    const app = Vue.createApp(StreamUIApp);
+    app.component('AppToast', AppToast);
+    app.component('AppConfirm', AppConfirm);
+    app.component('AppModal', AppModal);
+    app.component('AppTable', AppTable);
+    app.component('AppTabs', AppTabs);
+    app.component('AppSwitch', AppSwitch);
+    app.component('AppTree', AppTree);
+    app.component('PageDashboard', PageDashboard);
+    app.component('PagePullStreams', PagePullStreams);
+    app.component('PagePushStreams', PagePushStreams);
+    app.component('PageVideoWall', PageVideoWall);
+    app.component('PagePlayback', PagePlayback);
+    app.component('PageSettings', PageSettings);
+    app.mount('#app');
+  </script>
+</body>
+</html>
