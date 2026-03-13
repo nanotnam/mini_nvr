@@ -281,6 +281,10 @@ function createStreamPlayer(videoEl, statusEl) {
   };
 }
 
+/* ── Version ────────────────────────────────────────────── */
+
+const STREAMUI_VERSION = '1.0.0';
+
 /* ── Nav items ──────────────────────────────────────────── */
 
 const navItems = [
@@ -315,6 +319,7 @@ const StreamUIApp = {
             <span class="nav-label">API Docs</span>
           </a>
         </nav>
+        <div class="sidebar-version" v-show="!collapsed">v{{ version }}</div>
       </aside>
 
       <!-- Main -->
@@ -360,6 +365,6 @@ const StreamUIApp = {
     onMounted(() => { window.addEventListener('hashchange', onHashChange); if (!location.hash) location.hash = '#/dashboard'; });
     onUnmounted(() => window.removeEventListener('hashchange', onHashChange));
 
-    return { collapsed, currentPage, refreshKey, nav: navItems, pageComponent, apiDocsUrl, navigate };
+    return { collapsed, currentPage, refreshKey, nav: navItems, pageComponent, apiDocsUrl, navigate, version: STREAMUI_VERSION };
   }
 };
