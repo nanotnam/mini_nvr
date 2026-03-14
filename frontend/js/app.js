@@ -304,7 +304,7 @@ const StreamUIApp = {
       <!-- Sidebar -->
       <aside class="sidebar" :class="{ collapsed }">
         <div class="sidebar-logo">
-          <img src="./assets/logo.svg" alt="" class="logo-icon-only">
+          <img src="./assets/logo1.svg" alt="" class="logo-icon-only">
           <span class="logo-text">StreamUI</span>
         </div>
         <nav class="sidebar-nav">
