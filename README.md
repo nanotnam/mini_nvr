@@ -260,7 +260,7 @@ mini_nvr/
 │   │       ├── playback.js     # Recording table, timeline player
 │   │       └── settings.js     # ZLMediaKit config form
 │   ├── index.html          # SPA shell (loads Vue + all page components)
-│   ├── login.html          # Login gate (password: streamui)
+│   ├── login.html          # Login gate (password: 123456a@)
 │   ├── nginx.conf
 │   └── mime.types
 ├── assets/                 # Screenshots and architecture diagram
@@ -348,7 +348,7 @@ exponential backoff. If the source comes online, playback starts automatically.
 ### Login page keeps appearing
 
 The login session expires after 3 days. Clear `localStorage` or log in again.
-The default password is `streamui`.
+The default password is `123456a@`.
 
 ---
 

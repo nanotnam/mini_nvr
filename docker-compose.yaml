@@ -37,4 +37,5 @@ services:
     volumes:
       - ./record:/opt/media/bin/www/record
       - ./conf:/opt/media/conf
+      - ./log:/opt/media/bin/log
     restart: unless-stopped

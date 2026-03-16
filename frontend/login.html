@@ -32,7 +32,7 @@
         const password = ref('');
         const error = ref('');
         function handleLogin() {
-          if (password.value === 'streamui') {
+          if (password.value === '123456a@') {
             localStorage.setItem('loginTime', String(Date.now()));
             window.location.href = './index.html';
           } else {

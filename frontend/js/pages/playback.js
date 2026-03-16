@@ -7,7 +7,7 @@ const PagePlayback = {
       <div class="card-body">
         <app-table :columns="columns" :data="tableData" :page-size="8">
           <template #cell-isRecordingMP4="{ row }">
-            <template v-if="row.isRecordingMP4"><span style="color:#16baaa;font-weight:600">Yes</span></template>
+            <template v-if="row.isRecordingMP4"><span style="color:#e03;font-weight:600">Yes</span></template>
             <template v-else-if="hasPolicy(row) && !row.isOnline"><span style="color:#ffb800;font-weight:600">Yes (offline)</span></template>
             <template v-else><span style="color:#999">No</span></template>
           </template>

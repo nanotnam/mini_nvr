@@ -211,6 +211,8 @@ __marimo__/
 !/record/.gitkeep
 /conf/*
 !/conf/.gitkeep
+/log/*
+!/log/.gitkeep
 
 # SQLite database generated at runtime
 backend/db/*.db

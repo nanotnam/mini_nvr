@@ -11,8 +11,8 @@
   --body-bg: #eee;
   --card-bg: #fff;
   --card-radius: 8px;
-  --accent: #16baaa;
-  --accent-hover: #13a89a;
+  --accent: #e03;
+  --accent-hover: #c00;
   --danger: #ff5722;
   --danger-hover: #e64a19;
   --text: #333;
@@ -258,7 +258,7 @@ tbody tr:hover { background: #f9f9f9; }
   cursor: pointer; padding: 4px 8px; border-radius: var(--radius);
   transition: background var(--transition);
 }
-.tree-leaf:hover { background: #e8f5e9; }
+.tree-leaf:hover { background: #fce8e8; }
 
 /* ── Video ────────────────────────────────────────────────── */
 
@@ -305,10 +305,10 @@ tbody tr:hover { background: #f9f9f9; }
 .timeline-label { position: absolute; transform: translateX(-50%); }
 .timeline-playhead {
   position: absolute; top: 18px; width: 2px; height: 36px;
-  background: red; z-index: 10; transform: translateX(-50%); cursor: grab;
+  background: var(--accent); z-index: 10; transform: translateX(-50%); cursor: grab;
 }
 .timeline-playhead::after {
-  content: '\25B6'; position: absolute; top: -12px; left: -6px; font-size: 14px; color: red;
+  content: '\25B6'; position: absolute; top: -12px; left: -6px; font-size: 14px; color: var(--accent);
 }
 .timeline-playhead.dragging { cursor: grabbing; }
 .timeline-time {
