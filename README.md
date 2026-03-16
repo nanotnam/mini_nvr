@@ -207,13 +207,16 @@ cell, then pick an online stream from the tree. Supports fullscreen mode.
 ### Previewing a stream
 
 Click **Preview** on any stream row to open an in-browser player.
-The player uses HTTP-fMP4 (`.live.mp4`) for playback with automatic reconnection.
+The player prefers **WebRTC** for low-latency playback and falls back to **HTTP-fMP4**
+if WebRTC fails (e.g. stream unavailable, NAT/firewall blocking UDP).
 
-- If the stream is **online** and fMP4 is enabled, playback starts immediately.
+- If the stream is **online** and WebRTC or fMP4 is enabled, playback starts (WebRTC first).
 - If the stream is **offline**, the player retries with exponential backoff until the
   stream comes online.
-- If the stream is online but **HTTP-fMP4 is disabled**, a message prompts you to
-  enable it in Settings.
+- If the stream is online but neither **WebRTC nor HTTP-fMP4** is enabled, a message
+  prompts you to enable one in Settings.
+- For **cross-network WebRTC** (browser on a different machine), configure `rtc.externIP`
+  in ZLMediaKit config to the host's reachable IP.
 
 ### Distribution URLs
 
@@ -227,6 +230,7 @@ Once a stream is online you can consume it via any enabled protocol:
 | HLS (fMP4) | `http://<host>:8080/<app>/<stream>/hls.fmp4.m3u8` |
 | HTTP-TS | `http://<host>:8080/<app>/<stream>.live.ts` |
 | HTTP-fMP4 | `http://<host>:8080/<app>/<stream>.live.mp4` |
+| WebRTC | Via `/index/api/webrtc?app=<app>&stream=<stream>&type=play` (SDP exchange) |
 
 ---
 
@@ -235,10 +239,18 @@ Once a stream is online you can consume it via any enabled protocol:
 ```
 mini_nvr/
 ├── backend/                # FastAPI application
+│   ├── api/                # API routers
+│   │   ├── perf.py         # Performance / host stats
+│   │   ├── streams.py      # Pull proxies, stream list, close stream
+│   │   ├── webrtc.py       # WebRTC signaling proxy
+│   │   ├── playback.py     # Recording, playback, delete recordings
+│   │   ├── server.py       # Config, restart
+│   │   ├── zlm.py          # ZLMediaKit client + helpers
+│   │   └── jobs.py         # Sync pull proxies, ensure recording
 │   ├── db/                 # SQLite helpers (schema, CRUD)
 │   │   ├── __init__.py
 │   │   └── sqlite.py
-│   ├── main.py             # REST API endpoints + lifespan
+│   ├── main.py             # App entry, lifespan, router registration
 │   ├── scheduler.py        # APScheduler jobs (cleanup old segments)
 │   └── utils.py            # Timezone helpers, ffprobe wrapper, config reader
 ├── frontend/               # Static web UI served by Nginx

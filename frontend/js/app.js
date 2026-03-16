@@ -216,10 +216,16 @@ function formatBytes(bytes) {
 
 /* ── Streaming video player mixin ───────────────────────── */
 
-function createStreamPlayer(videoEl, statusEl) {
+function createFmp4Player(videoEl, statusEl, showProtocolBadge) {
   let stopped = false, retryCount = 0, retryTimer = null, waitingTimer = null, baseUrl = null;
 
-  const showStatus = (text) => { if (statusEl) { statusEl.textContent = text; statusEl.style.display = 'flex'; } };
+  const showStatus = (text) => {
+    if (statusEl) {
+      statusEl.classList.remove('protocol-badge');
+      statusEl.textContent = text;
+      statusEl.style.display = 'flex';
+    }
+  };
   const hideStatus = () => { if (statusEl) statusEl.style.display = 'none'; };
   const clearTimers = () => { if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; } if (waitingTimer) { clearTimeout(waitingTimer); waitingTimer = null; } };
   const buildUrl = () => baseUrl + (baseUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
@@ -238,8 +244,16 @@ function createStreamPlayer(videoEl, statusEl) {
     }, delay);
   };
 
-  const onPlaying = () => { retryCount = 0; clearTimers(); hideStatus(); };
-  const onCanPlay = () => hideStatus();
+  const onPlaying = () => {
+    retryCount = 0;
+    clearTimers();
+    if (showProtocolBadge) showProtocolBadge('HTTP-fMP4');
+    else hideStatus();
+  };
+  const onCanPlay = () => {
+    if (showProtocolBadge) showProtocolBadge('HTTP-fMP4');
+    else hideStatus();
+  };
   const onWaiting = () => {
     if (stopped) return;
     if (waitingTimer) return;
@@ -277,6 +291,98 @@ function createStreamPlayer(videoEl, statusEl) {
       videoEl.removeEventListener('error', onError);
       videoEl.removeEventListener('stalled', onStalled);
       videoEl.removeEventListener('ended', onEnded);
+    }
+  };
+}
+
+async function tryWebRTCPlay(videoEl, statusEl, app, stream, showStatus, hideStatus) {
+  const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+  const mediaStream = new MediaStream();
+
+  pc.ontrack = (e) => {
+    if (e.streams && e.streams[0]) {
+      videoEl.srcObject = e.streams[0];
+    } else {
+      mediaStream.addTrack(e.track);
+      videoEl.srcObject = mediaStream;
+    }
+  };
+
+  pc.addTransceiver('video', { direction: 'recvonly' });
+  pc.addTransceiver('audio', { direction: 'recvonly' });
+
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+
+  const params = new URLSearchParams({ app, stream });
+  const res = await fetch('/api/webrtc/play?' + params, {
+    method: 'POST',
+    body: offer.sdp,
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    signal: AbortSignal.timeout(10000),
+  });
+  const json = await res.json();
+  if (json.code !== 0 || !json.sdp) {
+    pc.close();
+    throw new Error(json.msg || 'WebRTC signaling failed');
+  }
+
+  await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: json.sdp }));
+  const p = videoEl.play();
+  if (p && p.catch) p.catch(() => {});
+  return pc;
+}
+
+function createStreamPlayer(videoEl, statusEl) {
+  let innerPlayer = null;
+  let pc = null;
+  let stopped = false;
+
+  const showStatus = (text) => {
+    if (statusEl) {
+      statusEl.classList.remove('protocol-badge');
+      statusEl.textContent = text;
+      statusEl.style.display = 'flex';
+    }
+  };
+  const hideStatus = () => { if (statusEl) statusEl.style.display = 'none'; };
+  const showProtocolBadge = (protocol) => {
+    if (statusEl) {
+      statusEl.classList.add('protocol-badge');
+      statusEl.textContent = protocol;
+      statusEl.style.display = 'flex';
+    }
+  };
+
+  return {
+    play(app, stream, isOnline) {
+      this.stop();
+      stopped = false;
+      showStatus(isOnline ? 'Connecting (WebRTC)...' : 'Stream offline, waiting...');
+
+      tryWebRTCPlay(videoEl, statusEl, app, stream, showStatus, hideStatus)
+        .then((peerConn) => {
+          if (stopped) { peerConn.close(); return; }
+          pc = peerConn;
+          showProtocolBadge('WebRTC');
+        })
+        .catch(() => {
+          if (stopped) return;
+          showStatus('WebRTC failed, using HTTP-fMP4...');
+          innerPlayer = createFmp4Player(videoEl, statusEl, showProtocolBadge);
+          innerPlayer.play(app, stream, isOnline);
+        });
+    },
+    stop() {
+      stopped = true;
+      if (pc) { pc.close(); pc = null; }
+      if (innerPlayer) { innerPlayer.destroy(); innerPlayer = null; }
+      if (videoEl) { videoEl.pause(); videoEl.srcObject = null; videoEl.removeAttribute('src'); videoEl.load(); }
+      if (statusEl) statusEl.classList.remove('protocol-badge');
+      hideStatus();
+    },
+    destroy() {
+      this.stop();
     }
   };
 }
