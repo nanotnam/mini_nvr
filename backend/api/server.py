@@ -3,6 +3,7 @@ Server config and restart API.
 """
 
 import asyncio
+import socket
 
 import docker
 
@@ -11,6 +12,27 @@ from fastapi import APIRouter, Query, Request
 from .zlm import ZLM_SERVER, ZLM_CONTAINER_NAME, STREAMUI_CONTAINER_NAME, client, get_zlm_secret_cached
 
 router = APIRouter(prefix="/api/server", tags=["Config"])
+
+
+def _get_lan_ip() -> str | None:
+    """Return the host's primary LAN IP (for WebRTC externIP)."""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.settimeout(0)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except OSError:
+        return None
+
+
+@router.get("/lan-ip", summary="Get host LAN IP for WebRTC externIP")
+async def get_lan_ip():
+    """Return the host's primary LAN IP. Use this for rtc.externIP when WebRTC
+    must work from other devices on the same network."""
+    ip = _get_lan_ip()
+    return {"code": 0, "ip": ip or ""}
 
 
 @router.get("/config", summary="Get server configuration")

@@ -145,6 +145,13 @@ const PageSettings = {
             <input class="input" type="number" v-model.number="form.rtp_g711_dur_ms" min="20" step="20" placeholder="20~180" />
             <div class="form-hint">Voice duration per G.711 RTP packet (ms, range 20-180).</div>
           </div></div>
+
+          <!-- WebRTC external IP -->
+          <div class="form-row"><label class="form-label">WebRTC external IP</label><div class="form-field inline-flex gap-8" style="flex-wrap:wrap;align-items:center">
+            <input class="input" type="text" v-model="form.rtc_externIP" placeholder="Empty = auto (host only)" style="min-width:140px" />
+            <button type="button" class="btn btn-secondary" @click="detectLanIp" :disabled="detecting">Detect</button>
+            <div class="form-hint" style="flex-basis:100%;margin-top:4px">Required for WebRTC from other LAN devices. Leave empty if viewing only on this host.</div>
+          </div></div>
         </div>
       </div>
       <div style="display:flex;justify-content:center;padding:16px 0 32px">
@@ -168,10 +175,12 @@ const PageSettings = {
       continue_push_ms: 0, paced_sender_ms: 0,
       fileBufSize: 0, fastStart: '0', enableFmp4: '0',
       gop_cache: 1, rtp_g711_dur_ms: 100,
+      rtc_externIP: '',
     });
 
     const applying = ref(false);
     const applyStatus = ref('');
+    const detecting = ref(false);
 
     async function loadConfig() {
       try {
@@ -206,8 +215,26 @@ const PageSettings = {
           form.enableFmp4 = String(Number(c['record.enableFmp4']));
           form.gop_cache = Number(c['rtp_proxy.gop_cache']);
           form.rtp_g711_dur_ms = Number(c['rtp_proxy.rtp_g711_dur_ms']);
+          form.rtc_externIP = String(c['rtc.externIP'] ?? '').trim();
         }
       } catch { $toast('Failed to load config', 'error'); }
+    }
+
+    async function detectLanIp() {
+      detecting.value = true;
+      try {
+        const res = await fetch('/api/server/lan-ip').then(r => r.json());
+        if (res.code === 0 && res.ip) {
+          form.rtc_externIP = res.ip;
+          $toast('Detected: ' + res.ip, 'success');
+        } else {
+          $toast('Could not detect LAN IP', 'error');
+        }
+      } catch {
+        $toast('Failed to detect LAN IP', 'error');
+      } finally {
+        detecting.value = false;
+      }
     }
 
     async function applySettings() {
@@ -248,6 +275,7 @@ const PageSettings = {
         'record.enableFmp4': form.enableFmp4,
         'rtp_proxy.gop_cache': String(form.gop_cache),
         'rtp_proxy.rtp_g711_dur_ms': String(form.rtp_g711_dur_ms),
+        'rtc.externIP': String(form.rtc_externIP || '').trim(),
       };
 
       const qs = new URLSearchParams(putData).toString();
@@ -283,6 +311,6 @@ const PageSettings = {
 
     onMounted(loadConfig);
 
-    return { form, applying, applyStatus, applySettings };
+    return { form, applying, applyStatus, applySettings, detecting, detectLanIp };
   }
 };

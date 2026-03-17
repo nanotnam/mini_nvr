@@ -215,8 +215,9 @@ if WebRTC fails (e.g. stream unavailable, NAT/firewall blocking UDP).
   stream comes online.
 - If the stream is online but neither **WebRTC nor HTTP-fMP4** is enabled, a message
   prompts you to enable one in Settings.
-- For **cross-network WebRTC** (browser on a different machine), configure `rtc.externIP`
-  in ZLMediaKit config to the host's reachable IP.
+- For **cross-network WebRTC** (browser on a different machine), go to **Settings** and set
+  **WebRTC external IP** to your host's LAN IP (e.g. `192.168.1.100`). Use the **Detect**
+  button to auto-fill it, then click **Apply Settings**.
 
 ### Distribution URLs
 
