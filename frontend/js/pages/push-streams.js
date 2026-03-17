@@ -81,9 +81,9 @@ const PagePushStreams = {
         <p>Push a local video/camera feed to StreamUI (ZLMediaKit) via RTSP / RTMP / RTP. Once active, the app/stream ID pair appears in this list and can be previewed or distributed.</p>
         <p class="mt-8" style="color:#666">If FFmpeg and StreamUI run on the same machine use <code>127.0.0.1</code>; otherwise replace it with the StreamUI server IP.</p>
         <p class="mt-8">1. Push via RTSP (TCP)</p>
-        <pre style="background:#f8f8f8;padding:10px;border:1px solid #ddd;border-radius:4px;overflow:auto">ffmpeg -re -i ./test.mp4 -vcodec h264 -acodec aac -f rtsp -rtsp_transport tcp rtsp://127.0.0.1:8554/{app}/{streamID}</pre>
+        <pre style="background:#f8f8f8;padding:10px;border:1px solid #ddd;border-radius:4px;overflow:auto">ffmpeg -re -i ./test.mp4 -vcodec h264 -acodec aac -f rtsp -rtsp_transport tcp rtsp://127.0.0.1:{{ getStreamUIPorts().rtsp }}/{app}/{streamID}</pre>
         <p class="mt-8">2. Push via RTMP</p>
-        <pre style="background:#f8f8f8;padding:10px;border:1px solid #ddd;border-radius:4px;overflow:auto">ffmpeg -re -i ./test.mp4 -vcodec h264 -acodec aac -f flv rtmp://127.0.0.1:1935/{app}/{streamID}</pre>
+        <pre style="background:#f8f8f8;padding:10px;border:1px solid #ddd;border-radius:4px;overflow:auto">ffmpeg -re -i ./test.mp4 -vcodec h264 -acodec aac -f flv rtmp://127.0.0.1:{{ getStreamUIPorts().rtmp }}/{app}/{streamID}</pre>
         <p class="mt-8">3. Push via RTP</p>
         <pre style="background:#f8f8f8;padding:10px;border:1px solid #ddd;border-radius:4px;overflow:auto">ffmpeg -re -i ./test.mp4 -vcodec h264 -acodec aac -f rtp_mpegts rtp://127.0.0.1:10000</pre>
       </div>
@@ -130,13 +130,14 @@ const PagePushStreams = {
     function schemaUrl(schema, row) {
       if (!row) return '';
       const h = location.hostname;
+      const p = getStreamUIPorts();
       const map = {
-        rtsp: `rtsp://${h}:8554/${row.app}/${row.stream}`,
-        rtmp: `rtmp://${h}:1935/${row.app}/${row.stream}`,
-        hls: `http://${h}:8080/${row.app}/${row.stream}/hls.m3u8`,
-        'hls.fmp4': `http://${h}:8080/${row.app}/${row.stream}/hls.fmp4.m3u8`,
-        ts: `http://${h}:8080/${row.app}/${row.stream}.live.ts`,
-        fmp4: `http://${h}:8080/${row.app}/${row.stream}.live.mp4`,
+        rtsp: `rtsp://${h}:${p.rtsp}/${row.app}/${row.stream}`,
+        rtmp: `rtmp://${h}:${p.rtmp}/${row.app}/${row.stream}`,
+        hls: `http://${h}:${p.http}/${row.app}/${row.stream}/hls.m3u8`,
+        'hls.fmp4': `http://${h}:${p.http}/${row.app}/${row.stream}/hls.fmp4.m3u8`,
+        ts: `http://${h}:${p.http}/${row.app}/${row.stream}.live.ts`,
+        fmp4: `http://${h}:${p.http}/${row.app}/${row.stream}.live.mp4`,
       };
       return map[schema] || '#';
     }

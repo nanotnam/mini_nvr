@@ -3,15 +3,28 @@ Server config and restart API.
 """
 
 import asyncio
+import os
 import socket
 
 import docker
 
 from fastapi import APIRouter, Query, Request
 
-from .zlm import ZLM_SERVER, ZLM_CONTAINER_NAME, STREAMUI_CONTAINER_NAME, client, get_zlm_secret_cached
+from .zlm import (
+    ZLM_CONTAINER_NAME,
+    ZLM_SERVER,
+    STREAMUI_CONTAINER_NAME,
+    client,
+    get_zlm_secret_cached,
+)
 
 router = APIRouter(prefix="/api/server", tags=["Config"])
+
+# Host ports for ZLMediaKit (must match docker-compose port mappings)
+ZLM_HTTP_PORT = int(os.getenv("ZLM_HTTP_PORT", "8080"))
+ZLM_RTSP_PORT = int(os.getenv("ZLM_RTSP_PORT", "8554"))
+ZLM_RTMP_PORT = int(os.getenv("ZLM_RTMP_PORT", "1935"))
+ZLM_RTC_PORT = int(os.getenv("ZLM_RTC_PORT", "8000"))
 
 
 def _get_lan_ip() -> str | None:
@@ -25,6 +38,19 @@ def _get_lan_ip() -> str | None:
         return ip
     except OSError:
         return None
+
+
+@router.get("/ports", summary="Get ZLM host ports for stream URLs")
+async def get_ports():
+    """Return the configured host ports for ZLMediaKit. Use these when building
+    stream URLs so they work when ports are changed in docker-compose."""
+    return {
+        "code": 0,
+        "http": ZLM_HTTP_PORT,
+        "rtsp": ZLM_RTSP_PORT,
+        "rtmp": ZLM_RTMP_PORT,
+        "rtc": ZLM_RTC_PORT,
+    }
 
 
 @router.get("/lan-ip", summary="Get host LAN IP for WebRTC externIP")

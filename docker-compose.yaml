@@ -11,6 +11,10 @@ services:
       - TZ_NAME=${TZ_NAME:-UTC}
       - ZLM_CONTAINER_NAME=zlm-server
       - STREAMUI_CONTAINER_NAME=streamui-web-server
+      - ZLM_HTTP_PORT=${ZLM_HTTP_PORT:-8080}
+      - ZLM_RTSP_PORT=${ZLM_RTSP_PORT:-8554}
+      - ZLM_RTMP_PORT=${ZLM_RTMP_PORT:-1935}
+      - ZLM_RTC_PORT=${ZLM_RTC_PORT:-8000}
     volumes:
       - .:/workspace
       - ./record:/opt/media/bin/www/record

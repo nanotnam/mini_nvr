@@ -11,8 +11,9 @@ import httpx
 
 from utils import get_zlm_secret
 
-# ZLMediaKit base URL
-ZLM_SERVER = "http://127.0.0.1:8080"
+# ZLMediaKit base URL (host port for HTTP API)
+ZLM_HTTP_PORT = int(os.getenv("ZLM_HTTP_PORT", "8080"))
+ZLM_SERVER = f"http://127.0.0.1:{ZLM_HTTP_PORT}"
 # ZLMediaKit config path
 ZLM_CONFIG_PATH = "/opt/media/conf/config.ini"
 # Local recording root path

@@ -5,6 +5,22 @@
 
 const { createApp, ref, computed, watch, onMounted, onUnmounted, nextTick, reactive, toRaw } = Vue;
 
+/* ── Ports (from /api/server/ports, used for stream URLs) ── */
+
+let streamuiPorts = { http: 8080, rtsp: 8554, rtmp: 1935, rtc: 8000 };
+async function loadStreamUIPorts() {
+  try {
+    const res = await fetch('/api/server/ports').then(r => r.json());
+    if (res.code === 0) {
+      streamuiPorts.http = res.http;
+      streamuiPorts.rtsp = res.rtsp;
+      streamuiPorts.rtmp = res.rtmp;
+      streamuiPorts.rtc = res.rtc;
+    }
+  } catch {}
+}
+function getStreamUIPorts() { return streamuiPorts; }
+
 /* ── Toast (global) ─────────────────────────────────────── */
 
 const toasts = ref([]);
@@ -239,7 +255,7 @@ function createFmp4Player(videoEl, statusEl, showProtocolBadge) {
       retryTimer = null;
       if (stopped || !videoEl) return;
       videoEl.pause(); videoEl.src = buildUrl(); videoEl.load();
-      const p = videoEl.play(); if (p && p.catch) p.catch(() => {});
+      const playPromise = videoEl.play(); if (playPromise && playPromise.catch) playPromise.catch(() => {});
       retryCount++;
     }, delay);
   };
@@ -274,10 +290,11 @@ function createFmp4Player(videoEl, statusEl, showProtocolBadge) {
     play(app, stream, isOnline) {
       this.stop();
       stopped = false; retryCount = 0;
-      baseUrl = `http://${location.hostname}:8080/${encodeURIComponent(app)}/${encodeURIComponent(stream)}.live.mp4`;
+      const ports = getStreamUIPorts();
+      baseUrl = `http://${location.hostname}:${ports.http}/${encodeURIComponent(app)}/${encodeURIComponent(stream)}.live.mp4`;
       showStatus(isOnline ? 'Connecting...' : 'Stream offline, waiting for connection...');
       videoEl.src = buildUrl(); videoEl.load();
-      const p = videoEl.play(); if (p && p.catch) p.catch(() => {});
+      const playPromise = videoEl.play(); if (playPromise && playPromise.catch) playPromise.catch(() => {});
     },
     stop() {
       stopped = true; baseUrl = null; retryCount = 0; clearTimers(); hideStatus();
@@ -468,7 +485,11 @@ const StreamUIApp = {
     function navigate(hash) { location.hash = hash; currentPage.value = hash; }
 
     function onHashChange() { currentPage.value = location.hash || '#/dashboard'; }
-    onMounted(() => { window.addEventListener('hashchange', onHashChange); if (!location.hash) location.hash = '#/dashboard'; });
+    onMounted(() => {
+      window.addEventListener('hashchange', onHashChange);
+      if (!location.hash) location.hash = '#/dashboard';
+      loadStreamUIPorts();
+    });
     onUnmounted(() => window.removeEventListener('hashchange', onHashChange));
 
     return { collapsed, currentPage, refreshKey, nav: navItems, pageComponent, apiDocsUrl, navigate, version: STREAMUI_VERSION };

@@ -152,6 +152,12 @@ const PageSettings = {
             <button type="button" class="btn btn-secondary" @click="detectLanIp" :disabled="detecting">Detect</button>
             <div class="form-hint" style="flex-basis:100%;margin-top:4px">Required for WebRTC from other LAN devices. Leave empty if viewing only on this host.</div>
           </div></div>
+
+          <!-- WebRTC port -->
+          <div class="form-row"><label class="form-label">WebRTC port</label><div class="form-field">
+            <input class="input" type="number" v-model.number="form.rtc_port" min="1" max="65535" placeholder="8000" />
+            <div class="form-hint">Must match ZLM_RTC_PORT and docker port mapping (e.g. 8001:8001). Default 8000.</div>
+          </div></div>
         </div>
       </div>
       <div style="display:flex;justify-content:center;padding:16px 0 32px">
@@ -216,6 +222,7 @@ const PageSettings = {
           form.gop_cache = Number(c['rtp_proxy.gop_cache']);
           form.rtp_g711_dur_ms = Number(c['rtp_proxy.rtp_g711_dur_ms']);
           form.rtc_externIP = String(c['rtc.externIP'] ?? '').trim();
+          form.rtc_port = Number(c['rtc.port'] ?? 8000) || 8000;
         }
       } catch { $toast('Failed to load config', 'error'); }
     }
@@ -276,6 +283,8 @@ const PageSettings = {
         'rtp_proxy.gop_cache': String(form.gop_cache),
         'rtp_proxy.rtp_g711_dur_ms': String(form.rtp_g711_dur_ms),
         'rtc.externIP': String(form.rtc_externIP || '').trim(),
+        'rtc.port': String(form.rtc_port || 8000),
+        'rtc.tcpPort': String(form.rtc_port || 8000),
       };
 
       const qs = new URLSearchParams(putData).toString();

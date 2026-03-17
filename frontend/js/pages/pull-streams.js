@@ -171,13 +171,14 @@ const PagePullStreams = {
     function schemaUrl(schema, row) {
       if (!row) return '';
       const h = location.hostname;
+      const p = getStreamUIPorts();
       const map = {
-        rtsp: `rtsp://${h}:8554/${row.app}/${row.stream}`,
-        rtmp: `rtmp://${h}:1935/${row.app}/${row.stream}`,
-        hls: `http://${h}:8080/${row.app}/${row.stream}/hls.m3u8`,
-        'hls.fmp4': `http://${h}:8080/${row.app}/${row.stream}/hls.fmp4.m3u8`,
-        ts: `http://${h}:8080/${row.app}/${row.stream}.live.ts`,
-        fmp4: `http://${h}:8080/${row.app}/${row.stream}.live.mp4`,
+        rtsp: `rtsp://${h}:${p.rtsp}/${row.app}/${row.stream}`,
+        rtmp: `rtmp://${h}:${p.rtmp}/${row.app}/${row.stream}`,
+        hls: `http://${h}:${p.http}/${row.app}/${row.stream}/hls.m3u8`,
+        'hls.fmp4': `http://${h}:${p.http}/${row.app}/${row.stream}/hls.fmp4.m3u8`,
+        ts: `http://${h}:${p.http}/${row.app}/${row.stream}.live.ts`,
+        fmp4: `http://${h}:${p.http}/${row.app}/${row.stream}.live.mp4`,
       };
       return map[schema] || '#';
     }

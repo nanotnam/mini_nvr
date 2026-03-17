@@ -136,6 +136,22 @@ across container restarts and image rebuilds.
 | `./conf/` | `/opt/media/conf/` | ZLMediaKit `config.ini` and related files |
 | `./record/` | `/opt/media/bin/www/record/` | MP4 recording segments organised as `app/stream/YYYY-MM-DD/*.mp4` |
 
+### Custom ports
+
+If you change the host ports in `docker-compose.yaml` (e.g. `8081:80` instead of `8080:80`),
+set the matching environment variables so stream URLs and the backend use the correct ports:
+
+```bash
+# In .env or docker-compose environment
+ZLM_HTTP_PORT=8081
+ZLM_RTSP_PORT=8555
+ZLM_RTMP_PORT=1936
+ZLM_RTC_PORT=8001
+```
+
+Update the `zlm-server` port mappings to match. For WebRTC, use the **same** host and container
+port (e.g. `8001:8001`), then set **WebRTC port** to `8001` in Settings and click **Apply Settings**.
+
 ### ZLMediaKit settings
 
 Navigate to **Settings** in the web UI to configure:
