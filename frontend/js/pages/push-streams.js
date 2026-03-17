@@ -184,7 +184,7 @@ const PagePushStreams = {
         player = createStreamPlayer(vid, stat);
 
         const hasPlayable = Array.isArray(row.schemas) && row.schemas.some(s =>
-          s.schema === 'fmp4' || s.schema === 'webrtc' || s.schema === 'rtc');
+          s.schema === 'fmp4' || s.schema === 'webrtc' || s.schema === 'rtc' || s.schema === 'rtsp');
         if (!hasPlayable) {
           if (stat) { stat.textContent = 'Enable HTTP-fMP4 or WebRTC distribution in Settings first'; stat.style.display = 'flex'; }
         } else {
