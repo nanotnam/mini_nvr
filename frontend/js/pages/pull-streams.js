@@ -1,4 +1,4 @@
-/* Pull Streams page – table, add/preview/delete, record toggle */
+/* Pull Streams page – table, add/preview/delete, AI preview, record toggle */
 const PagePullStreams = {
   components: { AppModal, AppTable, AppSwitch, AppTabs },
   template: `
@@ -41,6 +41,7 @@ const PagePullStreams = {
           </template>
           <template #cell-actions="{ row }">
             <button class="btn btn-primary btn-sm mr-8" @click="openPreview(row)">Preview</button>
+            <button class="btn btn-secondary btn-sm mr-8" @click="openAiPreview(row)">AI Preview</button>
             <button class="btn btn-danger btn-sm" @click="deleteRow(row)">Delete</button>
           </template>
         </app-table>
@@ -96,6 +97,23 @@ const PagePullStreams = {
       </div>
     </app-modal>
 
+    <!-- AI Preview dialog -->
+    <app-modal v-model:visible="showAiPreview" :title="'AI Preview — ' + aiPreviewTitle" width="1000px" :full="true">
+      <div style="display:flex;flex-direction:column;align-items:center;height:100%">
+        <div style="width:960px;margin-bottom:12px;padding:10px;background:#f8f9fa;border:1px solid #e5e5e5;border-radius:6px">
+          <div><b>Push RTSP URL for AI view:</b></div>
+          <div class="mono clickable" style="display:inline-block;margin-top:6px;padding:6px 10px;background:#fff;border:1px solid #ddd;border-radius:4px" @click="copyToClipboard(aiPushUrl)">{{ aiPushUrl }}</div>
+          <div style="margin-top:6px;color:#666;font-size:13px">
+            Expected target stream: <b>{{ aiPreviewApp }}/{{ aiPreviewStream }}</b>
+          </div>
+        </div>
+        <div class="video-player" style="width:960px;height:540px;flex-shrink:0">
+          <video ref="aiPreviewVideo" autoplay style="width:960px;height:540px"></video>
+          <div ref="aiPreviewStatus" class="video-status"></div>
+        </div>
+      </div>
+    </app-modal>
+
     <!-- Record dialog -->
     <app-modal v-model:visible="showRecord" title="Start Recording" width="400px">
       <div class="form-row"><label class="form-label">Retention (days)</label><div class="form-field"><input class="input" type="number" v-model.number="recordDays" min="1" max="30" /></div></div>
@@ -124,6 +142,7 @@ const PagePullStreams = {
     const searchStatus = ref('all');
     const showAdd = ref(false);
     const showPreview = ref(false);
+    const showAiPreview = ref(false);
     const showRecord = ref(false);
     const showHelp = ref(false);
     const addForm = reactive({ url: '', app: 'live', stream: '', audio_type: '0' });
@@ -134,6 +153,12 @@ const PagePullStreams = {
     const previewTitle = ref('');
     const previewVideo = ref(null);
     const previewStatus = ref(null);
+    const aiPreviewTitle = ref('');
+    const aiPreviewApp = ref('');
+    const aiPreviewStream = ref('');
+    const aiPreviewVideo = ref(null);
+    const aiPreviewStatus = ref(null);
+    const aiPushUrl = ref('');
     const recordRow = ref(null);
     const recordDays = ref(1);
     let player = null;
@@ -149,7 +174,7 @@ const PagePullStreams = {
       { field: 'isRecordingMP4', title: 'Recording', width: '90px' },
       { field: 'totalReaderCount', title: 'Viewers', width: '80px' },
       { field: 'schemas', title: 'Protocols', minWidth: '150px' },
-      { field: 'actions', title: 'Actions', width: '180px' },
+      { field: 'actions', title: 'Actions', width: '290px' },
     ];
 
     const filteredData = computed(() => {
@@ -202,6 +227,7 @@ const PagePullStreams = {
     function resetSearch() { searchApp.value = ''; searchStream.value = ''; searchStatus.value = 'all'; loadTable(); }
 
     function openAdd() { addForm.url = ''; addForm.app = 'live'; addForm.stream = ''; addForm.audio_type = '0'; showAdd.value = true; }
+    function aiOutputStreamId(streamId) { return `${streamId}_ai`; }
 
     async function submitAdd() {
       if (!addForm.url || !addForm.app || !addForm.stream) { $toast('Please fill in all required fields', 'warn'); return; }
@@ -254,7 +280,26 @@ const PagePullStreams = {
       });
     }
 
+    function openAiPreview(row) {
+      aiPreviewApp.value = row.app;
+      aiPreviewStream.value = aiOutputStreamId(row.stream);
+      aiPreviewTitle.value = `${row.app}/${aiPreviewStream.value}`;
+      const ports = getStreamUIPorts();
+      aiPushUrl.value = `rtsp://${location.hostname}:${ports.rtsp}/${aiPreviewApp.value}/${aiPreviewStream.value}`;
+      showAiPreview.value = true;
+
+      nextTick(() => {
+        const vid = aiPreviewVideo.value;
+        const stat = aiPreviewStatus.value;
+        if (!vid) return;
+        if (player) { player.destroy(); player = null; }
+        player = createStreamPlayer(vid, stat);
+        player.play(aiPreviewApp.value, aiPreviewStream.value, false);
+      });
+    }
+
     watch(showPreview, (v) => { if (!v && player) { player.destroy(); player = null; } });
+    watch(showAiPreview, (v) => { if (!v && player) { player.destroy(); player = null; } });
 
     function toggleRecord(row) {
       if (row.isRecordingMP4) {
@@ -288,12 +333,13 @@ const PagePullStreams = {
 
     return {
       tableData, searchApp, searchStream, searchStatus, filteredData, columns,
-      showAdd, showPreview, showRecord, showHelp,
+      showAdd, showPreview, showAiPreview, showRecord, showHelp,
       addForm, previewRow, previewTab, previewSchemas, previewNoFmp4, previewTitle,
       previewVideo, previewStatus,
+      aiPreviewTitle, aiPreviewApp, aiPreviewStream, aiPreviewVideo, aiPreviewStatus, aiPushUrl,
       recordDays,
       loadTable, resetSearch, openAdd, submitAdd, deleteRow,
-      openPreview, toggleRecord, submitRecord,
+      openPreview, openAiPreview, toggleRecord, submitRecord,
       schemaName, uniqueSchemas, schemaUrl, trackDetail,
       formatDuration, formatBytes, copyToClipboard,
     };

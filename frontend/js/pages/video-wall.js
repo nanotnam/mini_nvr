@@ -69,16 +69,30 @@ const PageVideoWall = {
     async function loadStreamTree() {
       treeLoading.value = true;
       try {
-        const res = await fetch('/api/stream/streamid-list?schema=fmp4').then(r => r.json());
-        if (res.code === 0) {
-          const map = new Map();
-          (res.data || []).forEach(item => {
-            if (!item.app || !item.stream) return;
-            if (!map.has(item.app)) map.set(item.app, { title: item.app, _open: true, children: [] });
-            map.get(item.app).children.push({ title: item.stream, app: item.app, stream: item.stream });
-          });
-          treeData.value = Array.from(map.values());
+        // Do not hard-filter schema here; player can use WebRTC first, then fallback to fMP4.
+        const res = await fetch('/api/stream/streamid-list').then(r => r.json());
+        let list = [];
+        if (res.code === 0) list = res.data || [];
+
+        // If no online streams are reported, fallback to configured pull streams
+        // so users can still select them and wait for reconnection.
+        if (!list.length) {
+          const fallbackRes = await fetch('/api/stream/pull-proxy-table').then(r => r.json());
+          if (fallbackRes.code === 0) list = fallbackRes.data || [];
         }
+
+        const map = new Map();
+        list.forEach(item => {
+          if (!item.app || !item.stream) return;
+          if (!map.has(item.app)) map.set(item.app, { title: item.app, _open: true, children: [] });
+          map.get(item.app).children.push({
+            title: item.stream,
+            app: item.app,
+            stream: item.stream,
+            isOnline: item.isOnline !== false,
+          });
+        });
+        treeData.value = Array.from(map.values());
       } catch { $toast('Failed to fetch stream list', 'error'); }
       treeLoading.value = false;
     }
@@ -92,9 +106,7 @@ const PageVideoWall = {
     function onTreeSelect(node) {
       if (!node.app || !node.stream) return;
       const i = selectingIndex;
-      if (players[i]) {
-        players[i].play(node.app, node.stream, true);
-      }
+      if (players[i]) players[i].play(node.app, node.stream, node.isOnline !== false);
       showSelector.value = false;
       $toast(`Connecting to ${node.app}/${node.stream}...`, 'info', 1500);
     }
